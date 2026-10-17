@@ -42,13 +42,32 @@ function loadImageLocal(path) {
 // holds a usable local copy of the template this particular participant
 // needs. Only the ACTIVE cert type is ever preloaded, so a participant
 // registered under some other design must not use it — hence the id check.
-function preloadMatches(data) {
+// Returns null when the preload is safe to use, or a human-readable reason
+// it isn't — used both to decide (loadCertTemplateImage) and to say exactly
+// why, with real timestamps, when it falls back (see there).
+function preloadMismatchReason(data) {
   const p = typeof CERT_PRELOAD !== "undefined" ? CERT_PRELOAD : null;
-  if (!p || !p.imagePath) return false;
+  if (!p || !p.imagePath) return "preload tidak aktif";
   // An older backend doesn't send certTypeId; without it we can't prove the
   // preloaded design is the right one, so don't risk the wrong template.
-  if (typeof data.certTypeId !== "number") return false;
-  return p.certTypeId === data.certTypeId;
+  if (typeof data.certTypeId !== "number") return "backend tidak mengirim certTypeId";
+  if (p.certTypeId !== data.certTypeId) {
+    return `tipe sertifikat berbeda (preload untuk tipe ${p.certTypeId}, peserta ini tipe ${data.certTypeId})`;
+  }
+  // Same design, but has the admin uploaded a NEWER image for it since
+  // static/ was last generated? imageUpdatedAt is a real timestamp on both
+  // sides (when preload.js was baked, vs. this participant's template right
+  // now from the backend) rather than an opaque version token, specifically
+  // so this can be explained rather than just silently refused.
+  if (!p.imageUpdatedAt || !data.template.imageUpdatedAt) return null; // older generate/backend — can't compare, assume fine
+  if (p.imageUpdatedAt !== data.template.imageUpdatedAt) {
+    return `template berubah sejak static/ digenerate (tersimpan: ${p.imageUpdatedAt}, sekarang: ${data.template.imageUpdatedAt})`;
+  }
+  return null;
+}
+
+function preloadMatches(data) {
+  return preloadMismatchReason(data) === null;
 }
 
 // The template image, preferring the preloaded local copy when it is the
@@ -57,12 +76,19 @@ function preloadMatches(data) {
 // falls back to fetching from the backend exactly as before, so a forgotten
 // re-push degrades performance rather than breaking the page.
 async function loadCertTemplateImage(data) {
-  if (preloadMatches(data)) {
+  const mismatch = preloadMismatchReason(data);
+  if (mismatch === null) {
     try {
       return await loadImageLocal(CERT_PRELOAD.imagePath);
     } catch (e) {
       console.warn("Preload sertifikat gagal dipakai, memuat dari backend:", e.message);
     }
+  } else if (mismatch !== "preload tidak aktif") {
+    // Worth saying out loud (not just "preload off", which is the normal
+    // default state): the admin changed something and static/ hasn't caught
+    // up — most usefully when the template image itself changed, since that
+    // one carries exactly which saved version is stale and which is current.
+    console.info("Memuat gambar sertifikat dari backend, bukan dari preload static/ — " + mismatch + ".");
   }
   return loadImageViaFetch(API_BASE + data.template.imageUrl);
 }
