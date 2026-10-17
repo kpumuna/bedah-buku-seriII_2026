@@ -32,7 +32,14 @@
 </div>
 
 <main>
-  <div class="card">
+  <!-- Shown INSTEAD of everything below while the admin has registration
+       paused — nothing else in <main> renders in that case. -->
+  <div class="card" id="pausedCard" style="display:none;">
+    <h1>Daftar Hadir Belum Dibuka</h1>
+    <div class="sub" id="pausedMessage"></div>
+  </div>
+
+  <div class="card" id="mainFormCard">
     <h1>Formulir Kehadiran Peserta</h1>
     <div class="sub">Data ini akan digunakan untuk penerbitan e-sertifikat. Nomor sertifikat diterbitkan otomatis setelah presensi tersimpan.</div>
 
@@ -91,6 +98,26 @@
 <script src="js/preload.js"></script>
 <script src="js/certificate.js"></script>
 <script>
+  // Checked first, before anything else on this page: while the admin has
+  // registration paused, visitors see nothing but that message — not the
+  // form, not even briefly before an error appears. The backend still
+  // refuses POST /api/presensi outright either way (this is just so nobody
+  // wastes time filling in a form that was never going to be accepted).
+  (async () => {
+    try {
+      const s = await apiGet("/api/settings");
+      if (s.presensiPaused) {
+        document.getElementById("mainFormCard").style.display = "none";
+        document.getElementById("pausedMessage").textContent =
+          s.presensiPausedMessage || "Pendaftaran kehadiran belum dibuka. Silakan kembali lagi nanti.";
+        document.getElementById("pausedCard").style.display = "block";
+      }
+    } catch (e) {
+      // Can't reach the backend at all — let the normal form show and fail
+      // its own way on submit, rather than silently showing nothing.
+    }
+  })();
+
   watchNameLikeField("nama");
   watchNameLikeField("instansi");
 
