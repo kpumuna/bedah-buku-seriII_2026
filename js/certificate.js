@@ -105,8 +105,13 @@ function certLineText(data) {
 
 // Fills the "Nomor Sertifikat: ..." line above the canvas, and hides that
 // whole row when there is nothing to show — which is what an empty
-// cert_prefix means on a profile running without numbering.
+// cert_prefix means on a profile running without numbering. Also fills the
+// "e-sertifikat <nama> (<email>)" info line just above it, using
+// .textContent since nama/email are participant-supplied.
 function showCertNoRow(data) {
+  const info = document.getElementById("certInfoRow");
+  if (info) info.textContent = `e-sertifikat ${data.nama} (${data.email})`;
+
   const certNo = (data.certNo || "").trim();
   const row = document.getElementById("certNoRow");
   const text = document.getElementById("certNoText");

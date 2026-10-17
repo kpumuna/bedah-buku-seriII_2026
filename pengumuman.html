@@ -39,8 +39,31 @@
       Tautan Zoom untuk kegiatan ini akan diumumkan menjelang hari pelaksanaan.
       Silakan cek kembali halaman ini beberapa saat sebelum acara dimulai.
     </div>
+    <div id="zoomInfo" style="display:none;">
+      <p><a id="zoomLinkEl" href="#" target="_blank" rel="noopener noreferrer"></a></p>
+      <p class="sub" id="zoomCaptionEl"></p>
+    </div>
   </div>
 </main>
 
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script>
+  (async () => {
+    try {
+      const s = await apiGet("/api/settings");
+      if (s.zoomLink) {
+        document.getElementById("placeholderNotice").style.display = "none";
+        const a = document.getElementById("zoomLinkEl");
+        a.href = s.zoomLink;
+        a.textContent = s.zoomLink;
+        document.getElementById("zoomCaptionEl").textContent = s.zoomCaption || "";
+        document.getElementById("zoomInfo").style.display = "block";
+      }
+    } catch (e) {
+      // Can't reach the backend — leave the placeholder notice showing.
+    }
+  })();
+</script>
 </body>
 </html>
