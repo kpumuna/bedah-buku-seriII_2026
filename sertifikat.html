@@ -46,7 +46,7 @@
 
   <div class="card cert-box" id="certCard" style="display:none;">
     <h2>E-Sertifikat</h2>
-    <div class="sub">Nomor Sertifikat: <b id="certNoText"></b></div>
+    <div class="sub" id="certNoRow">Nomor Sertifikat: <b id="certNoText"></b></div>
     <canvas id="certCanvas"></canvas>
     <div class="dl-row">
       <button class="btn amber" id="dlPdfBtn">Unduh PDF</button>
@@ -58,6 +58,7 @@
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/validate.js"></script>
+<script src="js/preload.js"></script>
 <script src="js/certificate.js"></script>
 <script>
   let lastCanvas = null;
@@ -87,7 +88,7 @@
       lastCanvas = canvas;
       lastNama = data.nama;
       lastEmail = data.email;
-      document.getElementById("certNoText").textContent = data.certNo;
+      showCertNoRow(data);
       document.getElementById("certCard").style.display = "block";
     } catch (err) {
       notice("lookupNotice", err.message + ' Belum presensi? <a href="presensi.html">Isi di sini &rarr;</a>', "error");

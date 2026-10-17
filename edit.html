@@ -75,7 +75,7 @@
 
   <div class="card cert-box" id="certCard" style="display:none;">
     <h2>E-Sertifikat</h2>
-    <div class="sub">Nomor Sertifikat: <b id="certNoText"></b></div>
+    <div class="sub" id="certNoRow">Nomor Sertifikat: <b id="certNoText"></b></div>
     <canvas id="certCanvas"></canvas>
     <div class="dl-row">
       <button class="btn amber" id="dlPdfBtn">Unduh PDF</button>
@@ -88,6 +88,7 @@
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/validate.js"></script>
+<script src="js/preload.js"></script>
 <script src="js/certificate.js"></script>
 <script>
   watchNameLikeField("nama");
@@ -167,7 +168,7 @@
       lastCanvas = canvas;
       lastNama = data.nama;
       lastEmail = data.email;
-      document.getElementById("certNoText").textContent = data.certNo;
+      showCertNoRow(data);
       document.getElementById("certCard").style.display = "block";
     } catch (err) {
       // Non-fatal: the edit itself already succeeded.
